@@ -55,10 +55,6 @@ Through a hands-on interface, users can see the practical difference between wri
 
 ---
 
-## Demo: Setting SQL Agentic Application on Microsoft Fabric
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/F4IMijKm990?si=ceyh9d8eArRZJHsB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
 ## Set up required resources (One time)
 
 ### 1. Set up your repo
