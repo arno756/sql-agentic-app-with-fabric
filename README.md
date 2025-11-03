@@ -43,7 +43,6 @@ Through a hands-on interface, users can see the practical difference between wri
 
 ## Demo: Setting SQL Agentic Application on Microsoft Fabric
 
-[ttps://img.youtube.com/vi/F4IMijKm990/maxresdefault.jpg](https://youtu.be/F4IMijKm990)
 [<img src="https://img.youtube.com/vi/F4IMijKm990/hqdefault.jpg" width="600" height="300"
 />](https://www.youtube.com/embed/F4IMijKm990)
 
