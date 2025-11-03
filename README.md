@@ -43,6 +43,8 @@ Through a hands-on interface, users can see the practical difference between wri
 
 ## Demo: Setting SQL Agentic Application on Microsoft Fabric
 
+Click on the picture to watch the tutorial:
+
 [![Watch the demo](https://img.youtube.com/vi/F4IMijKm990/hqdefault.jpg)](https://www.youtube.com/watch?v=F4IMijKm990 "Click to watch on YouTube")
 
 ## 🔧 Prerequisites
