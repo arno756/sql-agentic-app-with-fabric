@@ -10,3 +10,5 @@ langgraph
 pyodbc
 python-dateutil
 python-dotenv
+pydantic
+mcp

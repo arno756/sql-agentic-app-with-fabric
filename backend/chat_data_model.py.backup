@@ -1,0 +1,101 @@
+def initialize_tool_definitions():
+    """Initialize tool definitions in the database"""
+    tools_data = [
+        {
+            "name": "get_user_accounts",
+            "description": "Retrieves all accounts for a given user",
+            "input_schema": {"type": "object", "properties": {}},
+            "cost_per_call_cents": 0
+        },
+        {
+            "name": "get_transactions_summary",
+            "description": "Provides spending summary with time period and account filters",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "time_period": {"type": "string"},
+                    "account_name": {"type": "string"}
+                }
+            },
+            "cost_per_call_cents": 0
+        },
+        {
+            "name": "search_support_documents",
+            "description": "Searches knowledge base for customer support answers",
+            "input_schema": {
+                "type": "object",
+                "properties": {"user_question": {"type": "string"}},
+                "required": ["user_question"]
+            },
+            "cost_per_call_cents": 2
+        },
+        {
+            "name": "create_new_account",
+            "description": "Creates a new bank account for the user",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "account_type": {"type": "string", "enum": ["checking", "savings", "credit"]},
+                    "name": {"type": "string"},
+                    "balance": {"type": "number"}
+                },
+                "required": ["account_type", "name"]
+            },
+            "cost_per_call_cents": 0
+        },
+        {
+            "name": "transfer_money",
+            "description": "Transfers money between accounts or to external accounts",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "from_account_name": {"type": "string"},
+                    "to_account_name": {"type": "string"},
+                    "amount": {"type": "number"},
+                    "to_external_details": {"type": "object"}
+                },
+                "required": ["from_account_name", "amount"]
+            },
+            "cost_per_call_cents": 0
+        },
+        {
+            "name": "query_database",
+            "description": "Query the database using MCP tools to describe tables or read data",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["describe", "read"],
+                        "description": "Either 'describe' to get table structure or 'read' to query data"
+                    },
+                    "table_name": {
+                        "type": "string",
+                        "description": "Name of the table (required for 'describe' action)"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "description": "Schema name (default: 'dbo')"
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "SELECT SQL query (required for 'read' action)"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum rows to return (1-1000, default: 100)"
+                    }
+                },
+                "required": ["action"]
+            },
+            "cost_per_call_cents": 1
+        }
+    ]
+    
+    for tool_data in tools_data:
+        existing_tool = ToolDefinition.query.filter_by(name=tool_data["name"]).first()
+        if not existing_tool:
+            tool_def = ToolDefinition(**tool_data)
+            db.session.add(tool_def)
+    
+    db.session.commit()
