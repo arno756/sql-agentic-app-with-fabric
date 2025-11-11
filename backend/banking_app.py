@@ -22,6 +22,7 @@ import requests  # For calling analytics service
 from langgraph.prebuilt import create_react_agent
 from shared.utils import _serialize_messages
 from init_data import check_and_ingest_data
+from tools.database_query import query_database
 # Load Environment variables and initialize app
 import os
 load_dotenv(override=True)
@@ -361,6 +362,7 @@ def handle_transactions():
         result = json.loads(result_str)
         status_code = 201 if result.get("status") == "success" else 400
         return jsonify(result), status_code
+
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot():
     if not ai_client:
@@ -370,7 +372,6 @@ def chatbot():
     messages = data.get("messages", [])
     session_id = data.get("session_id")
     user_id = fixed_user_id
-    # session_id_temp = "session_74a4b39c-72d9-4b30-b8b4-f317e4366e1e"
     
     # Fetch chat history from the analytics service
     history_data = call_analytics_service(f"chat/history/{session_id}", method='GET')
@@ -389,20 +390,48 @@ def chatbot():
 
     # Extract current user message
     user_message = messages[-1].get("content", "")
-    tools = [get_user_accounts, get_transactions_summary,
-            search_support_documents, create_new_account,
-            transfer_money]
+    
+    # Updated tools list - now includes query_database
+    tools = [
+        get_user_accounts, 
+        get_transactions_summary,
+        search_support_documents, 
+        create_new_account,
+        transfer_money,
+        query_database  # NEW TOOL for direct database queries
+    ]
 
-    # Initialize banking agent
+    # Initialize banking agent with enhanced prompt
     banking_agent = create_react_agent(
         model=ai_client,
         tools=tools,
         checkpointer=session_memory,
         prompt="""
-        - You are a customer support agent.
-        - You can use the provided tools to answer user questions and perform tasks.
-        - If you were unable to find an answer, inform the user.
-        - Do not use your general knowledge to answer questions.""",
+        You are a customer support agent for a banking application.
+        
+        You have access to the following capabilities:
+        1. Standard banking operations (get_user_accounts, get_transactions_summary, transfer_money, create_new_account)
+        2. Knowledge base search (search_support_documents)
+        3. Direct database queries (query_database)
+        
+        ## How to Answer Questions ##
+        - For simple requests like "what are my accounts?" or "what's my spending summary?", use the standard banking tools.
+        - For specific, custom, or list-based data questions (e.g., "Show me my last 5 transactions", "How many savings accounts do I have?"), **go directly to the `query_database` tool**. This is faster.
+        - When using `query_database`, you must first use the 'describe' action to see the table structure.
+        
+        ## Database Rules ##
+        - You must only access data for the user_id 'user_5'.
+        - **CRITICAL SQL FIX:** The `datetimeoffset` column type (like 'created_at') will fail. You **MUST** `CAST` it to a string in all SELECT or ORDER BY clauses (e.g., `CAST(created_at AS VARCHAR(30)) AS created_at_str`).
+        
+        ## Response Formatting ##
+        - **Be concise.** Do not explain your internal process (e.g., "I described the tables...").
+        - **Present results directly.**
+        - When a user asks for a list of transactions, format the final answer (after all tool calls are done) as a clean bulleted list.
+        - **Example of a good response:**
+          "Here are your last 5 transactions:
+          - [Date] - $[Amount] - [Description] - [Category] - [Status]
+          - [Date] - $[Amount] - [Description] - [Category] - [Status]"
+        """,
         name = "banking_agent_v1"
     )
     

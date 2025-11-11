@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
 import json
+import os
 from flask import jsonify
 from shared.utils import _to_json_primitive
 from shared.utils import get_user_id
+
 # Global variables that will be set by the main app
 db = None
 ChatHistory = None
@@ -131,6 +133,7 @@ def init_chat_db(database):
                 print("-----------------> New chat session created: ", session.session_id)
                 db.session.add(session)
                 db.session.commit()
+                
         def add_trace_messages(self, serialized_messages: str, 
                                trace_duration: int):
             """Add all messages in a trace to the chat history"""
@@ -155,6 +158,7 @@ def init_chat_db(database):
             res = "All trace messages added..."
             self.update_session_timestamp()
             return res
+            
         def add_human_message(self, message: dict, trace_id: str):
             """Add the human message to chat history"""
             entry_message = ChatHistory(
@@ -337,7 +341,6 @@ def handle_chat_sessions(request):
         return jsonify(session.to_dict()), 201
 
 
-
 def clear_chat_history():
     """Clear all chat history data - USE WITH CAUTION"""
     try:
@@ -367,6 +370,7 @@ def clear_session_data(session_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to clear session data: {str(e)}"}), 500
+
 def initialize_tool_definitions():
     """Initialize tool definitions in the database"""
     tools_data = [
@@ -426,6 +430,38 @@ def initialize_tool_definitions():
                 "required": ["from_account_name", "amount"]
             },
             "cost_per_call_cents": 0
+        },
+        {
+            "name": "query_database",
+            "description": "Query the database using direct tools to describe tables or read data",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["describe", "read"],
+                        "description": "Either 'describe' to get table structure or 'read' to query data"
+                    },
+                    "table_name": {
+                        "type": "string",
+                        "description": "Name of the table (required for 'describe' action)"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "description": "Schema name (default: 'dbo')"
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "SELECT SQL query (required for 'read' action)"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum rows to return (1-1000, default: 100)"
+                    }
+                },
+                "required": ["action"]
+            },
+            "cost_per_call_cents": 1
         }
     ]
     
@@ -437,20 +473,21 @@ def initialize_tool_definitions():
     
     db.session.commit()
 
+model_name = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1") # Fallback to gpt-4.1 if not set
+
 def initialize_agent_definitions():
     """Initialize agent definitions in the database"""
     agents_data = [
-                {
+        {
             "name": "banking_agent_v1",
             "description": "A customer support banking agent to help answer questions about their account and other general banking inquiries.",
             "llm_config": {
-                "model": "gpt-4.1",
+                "model": model_name,
                 "rate_limit": 50,
                 "token_limit": 1000
             },
             "prompt_template": "You are a banking assistant. Answer the user's questions about their bank accounts."
         }
-
     ]
     
     for agent in agents_data:
