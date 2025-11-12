@@ -398,7 +398,7 @@ def chatbot():
         search_support_documents, 
         create_new_account,
         transfer_money,
-        query_database  # NEW TOOL for direct database queries
+        query_database
     ]
 
     # Initialize banking agent with enhanced prompt
